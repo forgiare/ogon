@@ -1,0 +1,7 @@
+option('with_openh264', type: 'boolean', value: true, description: 'Add support for H.264 encoding.')
+option('with_tests', type: 'boolean', value: false, description: 'Build with unitary tests.')
+option('with_sm', type: 'boolean', value: true, description: 'Build the default session manager.')
+
+# debugging options
+option('debug_state', type: 'boolean', value: false, description: 'Enable frame state machine debugging.')
+option('encoder_stats', type: 'boolean', value: false, description: 'Enable encoding stats.')

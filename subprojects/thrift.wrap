@@ -1,0 +1,12 @@
+[wrap-file]
+directory = thrift-0.11.0
+
+source_url = http://archive.apache.org/dist/thrift/0.11.0/thrift-0.11.0.tar.gz 
+source_filename = thrift-0.11.0.tar.gz 
+source_hash = c4ad38b6cb4a3498310d405a91fef37b9a8e79a50cd0968148ee2524d2fa60c2
+
+patch_url =  https://github.com/hardening/wrapdb/raw/master/thrift/thrift-meson-0.11.0.zip
+patch_filename =  thrift-meson-0.11.0.zip
+patch_hash = ece31d57e403aad195f2e6a90efc0c01d9f11208400544fc5727dd8aa3b30d21
+
+

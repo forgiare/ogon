@@ -1,7 +1,7 @@
 namespace cpp ogon
-namespace java ogon
-namespace php ogon
-namespace perl ogon
+#namespace java ogon
+#namespace php ogon
+#namespace perl ogon
 
 
 typedef bool TBOOL
