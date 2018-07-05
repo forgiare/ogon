@@ -145,6 +145,36 @@ The response:
 * results - an array of PropertyValue in the same order than the request. Each PropertyValue contains if
 the property was successfully found and the retrieved value
 
+### ReconnectUser
+
+(since protocol version 1.2)
+This message is sent when a new user is connecting on the RDP server and has a reconnection cookie. The
+message is much like LogonUser, but has some specific fields:
+
+* connectionId - the connection identifier.
+* sessionId - session Id
+* clientRandom - when connecting using RDP4 security this needed to salt and authenticate the cookie
+* clientCookie - the reconnection cookie
+* width - the requested desktop width.
+* height - the requested desktop height.
+* colorDepth - the requested colorDepth
+* clientHostName - the client hostname of the rdp-connection.
+* clientAddress - the client address of the rdp-connection.
+* clientBuildNumber - the build number of the client.
+* clientProductId - the product id of the client.
+* clientHardwareId - the hardware id of the client.
+* clientProtocolType - the used protocol type to communicate with the client.
+
+
+The response is the same as LogonUser:
+
+* serviceEndpoint - is a pipename where to connect, otherwise null on error.
+* maxHeight - maximal height which is allowed for that session.
+* maxWidth - maximal width which is allowed for that session.
+* backendCookie - the cookie to identify the backend.
+* ogonCookie - the cookie to identify the ogon session.
+
+
 
 ## Messages from the ogon Session Manager to the ogon RDP server.
 
@@ -302,6 +332,22 @@ The response:
 
 * response - The returncodes used are taken from the Windows [MessageBox] return code definition.
 
+### LogonInfo
+
+(since protocol version 1.2)
+This message is sent when the sessionManager wants the RDP server to send a LogonInfo packet to the RDP client.
+
+The message contains:
+
+* connectionId - the connection identifier
+* login - the login associated with the session
+* domain - the domain for this user
+* sessionId - the session's id
+* cookie - an optional reconnection cookie
+
+The response:
+
+* success : tells if the operation was successful in the rdp-server
 
 
 [Google protocol buffers]:https://developers.google.com/protocol-buffers/

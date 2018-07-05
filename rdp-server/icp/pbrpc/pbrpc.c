@@ -99,6 +99,8 @@ pbRPCContext* pbrpc_server_new(pbRPCTransportContext* transport, HANDLE shutdown
 
 	context->writeQueue->object.fnObjectFree = queue_item_free;
 	context->shutdown = shutdown;
+	context->localVersionMajor = OGON_PROTOCOL_VERSION_MAJOR;
+	context->localVersionMinor = OGON_PROTOCOL_VERSION_MINOR;
 	return context;
 
 out_free_transactions:
@@ -460,7 +462,7 @@ static BOOL pbrpc_connect(pbRPCContext* context, DWORD timeout)
 	}
 
 	if (message->versioninfo == NULL) {
-		WLog_ERR(TAG, "error, was not versionInfo reply packet!");
+		WLog_ERR(TAG, "error, there was not versionInfo reply packet!");
 		goto error_out;
 	}
 
