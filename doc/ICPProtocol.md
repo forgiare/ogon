@@ -175,7 +175,6 @@ The response is the same as LogonUser:
 * ogonCookie - the cookie to identify the ogon session.
 
 
-
 ## Messages from the ogon Session Manager to the ogon RDP server.
 
 ### ping
@@ -348,6 +347,24 @@ The message contains:
 The response:
 
 * success : tells if the operation was successful in the rdp-server
+
+### ConnectionStats
+
+(since protocol version 1.3)
+This message requests the RDP server to give the statistics about a given connection.
+
+The message contains:
+
+* connectionId: the target connection id
+
+The response:
+
+	* success - if the operation was successful
+	* inBytes - the number of received bytes
+	* outBytes - the numnber of sent bytes
+	* inPackets - the number of received PDUs
+	* outPackets - the number of sen PDUs
+
 
 
 [Google protocol buffers]:https://developers.google.com/protocol-buffers/
