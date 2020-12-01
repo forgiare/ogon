@@ -125,25 +125,29 @@ set(${MODULE_PREFIX}_SRCS
 	${MODULE_PROTOBUF_HEADERS}
 	)
 
-add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-if (THRIFT_EXTERNAL)
-	add_dependencies(${MODULE_NAME} thrift)
+if (WITH_SESSION_MANAGER)
+	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	if (THRIFT_EXTERNAL)
+		add_dependencies(${MODULE_NAME} thrift)
+	endif()
+
+	set(${MODULE_PREFIX}_LIBS "otsapi-thrift")
+
+	list(APPEND ${MODULE_PREFIX}_LIBS winpr)
+	list(APPEND ${MODULE_PREFIX}_LIBS ${PROTOBUF_LIBRARY})
+	list(APPEND ${MODULE_PREFIX}_LIBS winpr-tools)
+	list(APPEND ${MODULE_PREFIX}_LIBS ${DBUS_LIBRARIES})
+	list(APPEND ${MODULE_PREFIX}_LIBS ${CMAKE_THREAD_LIBS_INIT})
+
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_SBINDIR})
+
+	add_subdirectory(auth)
+	add_subdirectory(module)
 endif()
 
-set(${MODULE_PREFIX}_LIBS "otsapi-thrift")
 
-list(APPEND ${MODULE_PREFIX}_LIBS winpr)
-list(APPEND ${MODULE_PREFIX}_LIBS ${PROTOBUF_LIBRARY})
-list(APPEND ${MODULE_PREFIX}_LIBS winpr-tools)
-list(APPEND ${MODULE_PREFIX}_LIBS ${DBUS_LIBRARIES})
-list(APPEND ${MODULE_PREFIX}_LIBS ${CMAKE_THREAD_LIBS_INIT})
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_SBINDIR})
-
-add_subdirectory(auth)
-add_subdirectory(module)
 add_subdirectory(otsapi)
 
 install(FILES config/ogon.SessionManager.conf DESTINATION ${SYSCONFDIR}/dbus-1/system.d)
