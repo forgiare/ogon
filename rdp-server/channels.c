@@ -528,6 +528,16 @@ static BOOL wts_read_drdynvc_data_first(registered_virtual_channel *channel, wSt
 	}
 
 	channel->dvc_total_length -= length;
+	if (!channel->internalChannel) {
+		CHANNEL_PDU_HEADER header;
+
+		header.flags = CHANNEL_FLAG_FIRST;
+		if (channel->dvc_total_length == 0)
+		   header.flags |= CHANNEL_FLAG_LAST;
+		header.length = length;
+		if (!ringbuffer_write(&channel->pipe_xmit_buffer, (const BYTE *)&header, sizeof(header)))
+			return FALSE;
+	}
 
 	return ringbuffer_write(&channel->pipe_xmit_buffer, Stream_Pointer(s), length) &&
 			vc_flush_xmit_buffer(channel, VC_BYTES_LIMIT_PER_LOOP_TURN);
@@ -546,6 +556,15 @@ static BOOL wts_read_drdynvc_data(registered_virtual_channel *channel, wStream *
 		}
 
 		channel->dvc_total_length -= length;
+	}
+
+	if (!channel->internalChannel) {
+		CHANNEL_PDU_HEADER header;
+
+		header.flags = (channel->dvc_total_length == 0) ? CHANNEL_FLAG_LAST : 0;
+		header.length = length;
+		if (!ringbuffer_write(&channel->pipe_xmit_buffer, (const BYTE *)&header, sizeof(header)))
+			return FALSE;
 	}
 
 	return ringbuffer_write(&channel->pipe_xmit_buffer, Stream_Pointer(s), length) &&

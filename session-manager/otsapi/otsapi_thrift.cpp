@@ -50,6 +50,7 @@
 #include <winpr/wtsapi.h>
 #include <winpr/synch.h>
 #include <winpr/environment.h>
+#include <winpr/sysinfo.h>
 #include <winpr/handle.h>
 #include <winpr/ssl.h>
 
@@ -73,6 +74,9 @@ typedef struct {
 	UINT32 sessionId;
 	UINT32 instance;
 	std::string virtualName;
+	BOOL isDynamic;
+	BYTE currentPdu[CHANNEL_PDU_LENGTH];
+	size_t currentPduAvailable;
 } THandleInfo;
 
 typedef std::map<HANDLE , THandleInfo> THandleInfoMap;
@@ -1177,7 +1181,8 @@ HANDLE WINAPI ogon_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, 
 	info.sessionId = getSessionId(currentCon, SessionId);
 	info.instance = result.instance;
 	info.virtualName = virtualName;
-
+	info.isDynamic = (flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0;
+	info.currentPduAvailable = 0;
 
 	EnterCriticalSection(&currentCon->cSection);
 	currentCon->handleInfoMap[hNamedPipe] = info;
@@ -1238,38 +1243,132 @@ out:
 	return result;
 }
 
+struct ScopedCriticalLocker {
+	ScopedCriticalLocker(CRITICAL_SECTION *cs) : mTarget(cs) { EnterCriticalSection(mTarget); }
+	~ScopedCriticalLocker() { LeaveCriticalSection(mTarget); }
+
+	CRITICAL_SECTION *mTarget;
+};
+
+static BOOL readExactLength(ULONGLONG dueDate, HANDLE hChannelHandle, PCHAR target, DWORD toRead, size_t *pBytesRead)
+{
+	ULONGLONG now;
+	do {
+		DWORD readBytes;
+		BOOL ret = ReadFile(hChannelHandle, target, toRead, &readBytes, NULL);
+		if (!ret || !readBytes) {
+			if (GetLastError() != ERROR_NO_DATA)
+				return FALSE;
+
+			now = GetTickCount64();
+			if (now >= dueDate) {
+				SetLastError(ERROR_NO_DATA);
+				return FALSE;
+			}
+
+			DWORD toWait = dueDate - now;
+			switch (WaitForSingleObject(hChannelHandle, toWait)) {
+			case WAIT_OBJECT_0:
+				break;
+			default:
+				SetLastError(ERROR_NO_DATA);
+				return FALSE;
+			}
+		} else {
+			toRead -= readBytes;
+			*pBytesRead += readBytes;
+		}
+		now = GetTickCount64();
+	} while (toRead && now < dueDate);
+
+	if (toRead) {
+		SetLastError(ERROR_NO_DATA);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL WINAPI ogon_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut,
 		PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead) {
 
-	if (ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, NULL)) {
+	TSessionInfo *currentCon = getSessionInfo(WTS_CURRENT_SERVER_HANDLE);
+	BOOL isDynamic;
+
+	ScopedCriticalLocker locker(&currentCon->cSection);
+	THandleInfoMap::iterator it = currentCon->handleInfoMap.find(hChannelHandle);
+	if (it == currentCon->handleInfoMap.end()) {
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	THandleInfo &info = it->second;
+	isDynamic = info.isDynamic;
+
+	size_t minBuffer = isDynamic ? CHANNEL_PDU_LENGTH : CHANNEL_CHUNK_LENGTH;
+	if (BufferSize < minBuffer) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	ULONGLONG now = GetTickCount64();
+	ULONGLONG dueDate = now + TimeOut;
+	BOOL ret;
+
+	if (isDynamic) {
+		/* dynamic channel, we expect CHANNEL_PDU_HEADER + chunk payload */
+		const CHANNEL_PDU_HEADER *header = (const CHANNEL_PDU_HEADER *)info.currentPdu;
+		PCHAR target = (PCHAR)&info.currentPdu[info.currentPduAvailable];
+		DWORD toRead;
+
+		if (info.currentPduAvailable < sizeof(*header)) {
+			/* read CHANNEL_PDU_HEADER to know how much to read after */
+			toRead = sizeof(*header) - info.currentPduAvailable;
+			ret = readExactLength(dueDate, hChannelHandle, target, toRead, &info.currentPduAvailable);
+			if (!ret)
+				return FALSE;
+		}
+
+		target = (PCHAR)&info.currentPdu[info.currentPduAvailable];
+		toRead = (header->length + sizeof(*header)) - info.currentPduAvailable;
+		ret = readExactLength(dueDate, hChannelHandle, target, toRead, &info.currentPduAvailable);
+		if (!ret)
+			return FALSE;
+
+		memcpy(Buffer, info.currentPdu, sizeof(*header) + header->length);
+		info.currentPduAvailable = 0;
+		*pBytesRead = sizeof(*header) + header->length;
 		return TRUE;
-	}
+	} else {
+		if (ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, NULL)) {
+			return TRUE;
+		}
 
-	if (TimeOut == 0) {
+		if (TimeOut == 0) {
+			return FALSE;
+		}
+
+		DWORD error = GetLastError();
+		if (error != ERROR_NO_DATA) {
+			SetLastError(error);
+			return FALSE;
+		}
+
+		DWORD result = WaitForSingleObject(hChannelHandle, TimeOut);
+		switch (result) {
+			case WAIT_OBJECT_0:
+				return ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, NULL);
+
+			case WAIT_TIMEOUT:
+			case WAIT_FAILED:
+				SetLastError(ERROR_NO_DATA);
+				break;
+			default:
+				fprintf(stderr, "%s: unexpected result %" PRIu32 "\n", __FUNCTION__, result);
+				break;
+		}
+
 		return FALSE;
 	}
-
-	DWORD error = GetLastError();
-	if (error != ERROR_NO_DATA) {
-		SetLastError(error);
-		return FALSE;
-	}
-
-	DWORD result = WaitForSingleObject(hChannelHandle, TimeOut);
-	switch (result) {
-		case WAIT_OBJECT_0:
-			return ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, NULL);
-
-		case WAIT_TIMEOUT:
-		case WAIT_FAILED:
-			SetLastError(ERROR_NO_DATA);
-			break;
-		default:
-			fprintf(stderr, "%s: unexpected result %" PRIu32 "\n", __FUNCTION__, result);
-			break;
-	}
-
-	return FALSE;
 }
 
 BOOL WINAPI ogon_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer,
