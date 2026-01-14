@@ -78,6 +78,7 @@ namespace ogon { namespace sessionmanager { namespace config {
 		boost::algorithm::to_upper(localPath);
 
 		std::string currentUserName;
+		sessionNS::SessionStore *sessionStore = APP_CONTEXT.getSessionStore();
 		if (sessionID == 0) {
 			// for no session, use username if it's present
 			if (username.size() == 0) {
@@ -91,7 +92,7 @@ namespace ogon { namespace sessionmanager { namespace config {
 			currentUserName = username;
 		} else {
 			// for a given sessionID we try to get the username from the sessionstore
-			sessionNS::SessionPtr session = APP_CONTEXT.getSessionStore()->getSession(sessionID);
+			sessionNS::SessionPtr session = sessionStore->getSession(sessionID);
 			if (!session) {
 				return false;
 			}
@@ -101,7 +102,7 @@ namespace ogon { namespace sessionmanager { namespace config {
 		if (localPath.substr(0, gConnectionPrefix.size()) == gConnectionPrefix) {
 			// requesting session values
 			std::string actualPath = localPath.substr(gConnectionPrefix.size());
-			sessionNS::SessionPtr currentSession = APP_CONTEXT.getSessionStore()->getSession(sessionID);
+			sessionNS::SessionPtr currentSession = sessionStore->getSession(sessionID);
 			if (NULL == currentSession) {
 				WLog_Print(logger_PropertyManager, WLOG_ERROR,
 					"Cannot get Session for sessionID %" PRIu32 "", sessionID);

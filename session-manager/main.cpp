@@ -266,8 +266,6 @@ void initWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	wLogLayout *layout;
 	wLogAppender *appender;
 
-	WLog_Init();
-
 	wlog_root = WLog_GetRoot();
 	if (wlog_root) {
 		const char *prefixFormat;
@@ -551,7 +549,7 @@ int main(int argc, char **argv) {
 		checkPidFile(pid_file);
 		daemonizeCode(pid_file);
 	}
-	
+
 	APP_CONTEXT.init();
 	initWLog(wlog_appender_type, logLevel);
 

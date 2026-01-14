@@ -54,7 +54,6 @@ namespace ogon { namespace sessionmanager {
 	}
 
 	ApplicationContext::~ApplicationContext() {
-		WLog_Uninit();
 	}
 
 	void ApplicationContext::init(void) {

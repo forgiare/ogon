@@ -420,7 +420,7 @@ static BOOL ogon_peer_post_connect(freerdp_peer *client)
 		}
 
 		error_code = ogon_icp_ReconnectUser((UINT32)(conn->id), arc->logonId,
-					clientRandom, clientRandomLen, arc->securityVerifier,
+					clientRandom, clientRandomLen, (char *)arc->securityVerifier,
 					settings->ClientHostname, settings->ClientAddress,
 					settings->ClientBuild,
 					1, /* clientProductId not parsed by FreeRDP currently */
@@ -1465,9 +1465,9 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	}
 
 	if (reqs[INDEX_FORCE_WEAK].success && reqs[INDEX_FORCE_WEAK].v.boolValue) {
-			free(settings->RdpKeyFile);
-			settings->RdpKeyFile = NULL;
-			settings->RdpServerRsaKey = ogon_generate_weak_rsa_key();
+		free(settings->RdpKeyFile);
+		settings->RdpKeyFile = NULL;
+		settings->RdpServerRsaKey = ogon_generate_weak_rsa_key();
 	}
 
 	front->showDebugInfo = reqs[INDEX_SHOW_DEBUG].v.boolValue;

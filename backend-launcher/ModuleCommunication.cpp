@@ -41,7 +41,8 @@ namespace ogon { namespace launcher {
  		pSignalStop signalStop) :
 			mGetPropertyBool(getPropBool), mGetPropertyNumber(getPropNumber), mGetPropertyString(getPropString),
 			mAddMonitoringProcess(addMonitoring), mRemoveMonitoringProcess(removeMonitoring), mStop(signalStop),
-			mUserToken(NULL), mModuleLib(NULL), mModuleContext(NULL), mStartSystemSession(false) {
+			mSessionId(0), mSessionPID(-1), mUserToken(NULL), mSessionStarted(false), mStartSystemSession(false),
+			mModuleLib(NULL), mModuleContext(NULL) {
 
 		memset(&mEntrypoints, 0, sizeof(RDS_MODULE_ENTRY_POINTS));
 	}

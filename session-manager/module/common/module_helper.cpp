@@ -41,7 +41,7 @@
 #include <errno.h>
 #endif
 
-#include "../../common/global.h"
+#include "../../../common/global.h"
 
 static wLog *logger_ModuleHelper = WLog_Get(OGON_TAG("sessionmanager.module.helper"));
 

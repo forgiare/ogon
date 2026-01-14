@@ -47,7 +47,7 @@
 #include <ogon/module.h>
 #include "qt_module.h"
 #include "../common/module_helper.h"
-#include "../../common/global.h"
+#include "../../../common/global.h"
 
 #include <ogon/api.h>
 
@@ -124,7 +124,7 @@ static char* qt_rds_module_start(RDS_MODULE_COMMON* module)
 	char* pipeName;
 	char qPipeName[256];
 	long xres, yres,colordepth;
-	char lpCommandLine[256];
+	char lpCommandLine[256 * 2];
 	const char* endpoint = "Qt";
 	char cmd[256];
 
@@ -215,7 +215,6 @@ static char *qt_get_custom_info(RDS_MODULE_COMMON *module)
 }
 
 int qt_module_init() {
-	WLog_Init();
 	gModuleLog = WLog_Get("com.ogon.module.qt");
 	return 0;
 }

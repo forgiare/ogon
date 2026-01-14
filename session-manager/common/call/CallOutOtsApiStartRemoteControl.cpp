@@ -38,8 +38,8 @@ namespace ogon { namespace sessionmanager { namespace call {
 		mTargetConnectionId(0),
 		mHotkey(0),
 		mModifiers(0),
-		mSuccess(false),
-		mFlags(0)
+		mFlags(0),
+		mSuccess(false)
 	{
 	}
 

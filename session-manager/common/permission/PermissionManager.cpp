@@ -90,7 +90,7 @@ namespace ogon { namespace sessionmanager { namespace permission {
 			struct dirent *next_file;
 			DIR *theFolder;
 
-			char filepath[256];
+			char filepath[256 + 2 + 256];
 
 			theFolder = opendir("/tmp");
 

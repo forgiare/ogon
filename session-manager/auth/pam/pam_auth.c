@@ -31,7 +31,7 @@
 #include <winpr/path.h>
 
 #include <security/pam_appl.h>
-#include "../../common/global.h"
+#include "../../../common/global.h"
 
 #include "pam_auth.h"
 #include <ogon/api.h>

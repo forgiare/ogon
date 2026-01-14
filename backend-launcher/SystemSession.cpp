@@ -32,10 +32,10 @@
 
 namespace ogon { namespace launcher {
 
-static wLog *logger = WLog_Get("ogon.launcher");
+	static wLog *logger = WLog_Get("ogon.launcher");
 
-	SystemSession::SystemSession() : mPamHandle(NULL), mSessionOpen(false), mUTMPwritten(false),
-			mSessionPID(0), mSessionID(0)
+	SystemSession::SystemSession() : mSessionOpen(false), mUTMPwritten(false), mPamHandle(NULL),
+			mSessionPID(-1), mSessionID(0)
 	{
 	}
 

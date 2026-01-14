@@ -10,7 +10,7 @@ typedef i32 TINT32
 typedef i64 TINT64
 typedef string TSTRING
 typedef i32 TDWORD
-typedef byte TBYTE
+typedef i8 TBYTE
 
 struct TVersion {
 	1:TINT32 VersionMajor;

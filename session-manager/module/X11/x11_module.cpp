@@ -53,7 +53,7 @@
 
 #include "x11_module.h"
 #include "../common/module_helper.h"
-#include "../../common/global.h"
+#include "../../../common/global.h"
 #include <ogon/api.h>
 
 #include <sys/types.h>
@@ -107,7 +107,7 @@ BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd, char *lpCurrentDirec
 	BOOL restoreSigMask = FALSE;
 	int comm_fds[2];
 	struct pollfd pfd;
-	char lpCommandLine[BUF_SIZE];
+	char lpCommandLine[4096 + BUF_SIZE];
 	long tmp;
 	unsigned int display_offset;
 	long xres, yres, colordepth;
@@ -161,12 +161,12 @@ BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd, char *lpCurrentDirec
 	}
 
 	if (haveFontPath) {
-		sprintf_s(lpCommandLine, BUF_SIZE,
+		sprintf_s(lpCommandLine, sizeof(lpCommandLine),
 				  "%s -displayfd %d:%u -geometry %ldx%ld -depth %d -dpi %u -fp %s",
 				  X11_BACKEND_NAME, comm_fds[1], display_offset, xres, yres, 24, dpi,
 				  fontPath);
 	} else {
-		sprintf_s(lpCommandLine, BUF_SIZE, "%s -displayfd %d:%u -geometry %ldx%ld -depth %d -dpi %u",
+		sprintf_s(lpCommandLine, sizeof(lpCommandLine), "%s -displayfd %d:%u -geometry %ldx%ld -depth %d -dpi %u",
 				  X11_BACKEND_NAME, comm_fds[1], display_offset, xres, yres, 24, dpi);
 	}
 
@@ -507,7 +507,7 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 	DWORD SessionId;
 	rdsModuleX11 *x11;
 	char buf[BUF_SIZE];
-	char xauthFileName[BUF_SIZE];
+	char xauthFileName[BUF_SIZE + 50];
 	char *pipeName = NULL;
 	char *cwd = NULL;
 	unsigned long tmpLen = 0;
@@ -732,7 +732,6 @@ static char *x11_get_custom_info(RDS_MODULE_COMMON *module) {
 }
 
 int x11_module_init() {
-	WLog_Init();
 	gModuleLog = WLog_Get("com.ogon.module.x11");
 
 	if (!InitializeCriticalSectionAndSpinCount(&gStartCS, 0x00000400)) {

@@ -45,7 +45,7 @@
 
 #include "weston_module.h"
 #include "../common/module_helper.h"
-#include "../../common/global.h"
+#include "../../../common/global.h"
 
 static RDS_MODULE_CONFIG_CALLBACKS gConfig;
 static RDS_MODULE_STATUS_CALLBACKS gStatus;
@@ -121,7 +121,7 @@ static char* weston_rds_module_start(RDS_MODULE_COMMON* module)
 	BOOL status;
 	char* pipeName;
 	long xres, yres,colordepth;
-	char lpCommandLine[256];
+	char lpCommandLine[512];
 	const char* endpoint = "Weston";
 	char cmd[256];
 	char buf[BUF_SIZE];
@@ -214,7 +214,6 @@ static char *weston_get_custom_info(RDS_MODULE_COMMON *module)
 }
 
 int weston_module_init() {
-	WLog_Init();
 	gModuleLog = WLog_Get("com.ogon.module.weston");
 	return 0;
 }

@@ -337,8 +337,6 @@ static void initializeWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	wLogAppender *appender;
 	const char *prefixFormat;
 
-	WLog_Init();
-
 	if (!(wlog_root = WLog_GetRoot())) {
 		fprintf(stderr, "Failed to get the logger root\n");
 		goto fail;
@@ -759,7 +757,6 @@ fail_init_ssl:
 	}
 
 	WLog_DBG(TAG, "Terminating..");
-	WLog_Uninit();
 
 	return ret;
 }
