@@ -149,10 +149,11 @@ pkgconfig.generate(
 	variables: [
 		'protocol_dir=${prefix}/@0@'.format(protocols_paths),
 		'module_dir=${prefix}/@0@/@1@/modules'.format(get_option('libdir'), ogon_app_lib_dir),
-	]
+	],
+	subdirs: 'ogon@0@'.format(ogon_version[0]),
 )
 
-pkgconfig.generate(
+pkgconfig.generate(ogon_backend_lib,
 	filebase: 'ogon-backend@0@'.format(ogon_version[0]),
 	name: 'ogon backend',
 	description: 'ogon RDP server backend library',
