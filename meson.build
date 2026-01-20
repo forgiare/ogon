@@ -3,8 +3,6 @@ project('ogon', 'c', 'cpp',
        license : 'AGPL',
        meson_version : '>= 1.1.0'
 )
-
-
 ogon_version_full = meson.project_version()
 ogon_version = ogon_version_full.split('.')
 
@@ -89,7 +87,13 @@ deps_freerdp = dependency('freerdp2')
 deps_freerdp_server = dependency('freerdp-server2')
 deps_winpr_utils = dependency('winpr-tools2')
 deps_systemd = dependency('libsystemd', required: get_option('with_sm'))
-deps_pam = dependency('pam')
+
+# Ubuntu 22.04 doesn't provide pkgconfig file, so search for pam also with the library
+deps_pam = dependency('pam', required: false)
+if not deps_pam.found()
+    libpam = cc.find_library('pam')
+    deps_pam = declare_dependency(dependencies: libpam)
+endif
 
 
 if cc.has_member('SURFACE_BITS_COMMAND', 'bmp', prefix: '#include <freerdp/update.h>', dependencies: deps_freerdp)
