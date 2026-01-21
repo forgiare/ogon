@@ -125,7 +125,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 				// shut down all threads
 				mTaskThreadList.erase(
 					remove_if(mTaskThreadList.begin(), mTaskThreadList.end(),
-						std::bind1st( std::mem_fun( &Executor::waitThreadHandles), this))
+						std::bind( std::mem_fn( &Executor::waitThreadHandles), this, std::placeholders::_1))
 					, mTaskThreadList.end());
 				break;
 			}
@@ -163,7 +163,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 				}
 				mTaskThreadList.erase(
 					remove_if(mTaskThreadList.begin(), mTaskThreadList.end(),
-						std::bind1st( std::mem_fun( &Executor::checkThreadHandles), this)),
+						std::bind( std::mem_fn( &Executor::checkThreadHandles), this, std::placeholders::_1)),
 					mTaskThreadList.end());
 			}
 		}

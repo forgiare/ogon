@@ -2,7 +2,7 @@
 
 sudo mkdir -p @OGON_PREFIX_PATH@/var/run
 sudo ln -sf @OGON_PREFIX_PATH@/etc/dbus-1/system.d/ogon.SessionManager.conf /etc/dbus-1/system.d/
-sudo reload dbus
+sudo systemctl reload dbus
 sudo ln -sf @OGON_PREFIX_PATH@/etc/pam.d/ogon.debian /etc/pam.d/ogon
 
 sudo ln -sf @OGON_PREFIX_PATH@/etc/systemd/system/ogon-rdp-server.service /etc/systemd/system/
