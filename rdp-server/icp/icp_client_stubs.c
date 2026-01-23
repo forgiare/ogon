@@ -512,11 +512,10 @@ int ogon_icp_get_property_string(UINT32 connectionId, char *path, char** value)
 
 
 static int ogon_icp_get_property_bulk_fallback(UINT32 connectionId, PropertyItem *items) {
-	PropertyItem *pItem;
 	size_t nbSuccess = 0, nbFails = 0;
 	int status = PBRPC_SUCCESS;
 
-	for (pItem = items; pItem->path; pItem++) {
+	for (PropertyItem *pItem = items; pItem->path; pItem++) {
 		switch (pItem->propertyType) {
 		case PROPERTY_BOOL:
 			status = ogon_icp_get_property_bool(connectionId, pItem->path, &pItem->v.boolValue);

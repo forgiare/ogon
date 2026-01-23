@@ -1,11 +1,13 @@
 configure_file(input: 'ogon-rdp-server.service.in',
 	output: 'ogon-rdp-server.service',
+	format: 'cmake',
 	configuration: cdata,
 	install: true,
 	install_dir: join_paths(get_option('sysconfdir'), 'systemd', 'system')
 )
 configure_file(input: 'ogon-session-manager.service.in',
 	output: 'ogon-session-manager.service',
+	format: 'cmake',
 	configuration: cdata,
 	install: true,
 	install_dir: join_paths(get_option('sysconfdir'), 'systemd', 'system')

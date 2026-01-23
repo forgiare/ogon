@@ -1413,7 +1413,6 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
 
 	freerdp_peer *peer = conn->context.peer;
-	int res;
 
 	PropertyItem reqs[] = {
 	/*0*/	PROPERTY_ITEM_INIT_STRING("ssl.certificate"),
@@ -1424,8 +1423,8 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	/*5*/	PROPERTY_ITEM_INIT_INT("ogon.bitrate", 0),
 	/*6*/	PROPERTY_ITEM_INIT_BOOL("ogon.disableGraphicsPipelineH264", FALSE),
 	/*7*/	PROPERTY_ITEM_INIT_BOOL("ogon.enableFullAVC444", FALSE),
-	/*8*/   PROPERTY_ITEM_INIT_BOOL("ogon.restrictAVC444", FALSE),
-		PROPERTY_ITEM_INIT_INT(NULL, 0), /* last one */
+	/*8*/	PROPERTY_ITEM_INIT_BOOL("ogon.restrictAVC444", FALSE),
+	PROPERTY_ITEM_INIT_INT(NULL, 0), /* last one */
 	};
 
 	enum {
@@ -1440,7 +1439,7 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 		INDEX_RESTRICT_AVC444
 	};
 
-	res = ogon_icp_get_property_bulk(conn->id, reqs);
+	int res = ogon_icp_get_property_bulk(conn->id, reqs);
 	if (res != PBRPC_SUCCESS) {
 		WLog_ERR(TAG, "error retrieving properties by the bulk method (res=%d)", res);
 		ogon_PropertyItem_free(reqs);

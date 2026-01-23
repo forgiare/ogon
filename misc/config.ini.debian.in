@@ -3,6 +3,7 @@
 # Use the snakeoil certificates from ssl-cert
 ssl_certificate_string=/etc/ssl/certs/ssl-cert-snakeoil.pem
 ssl_key_string=/etc/ssl/private/ssl-cert-snakeoil.key
+ogon_forceWeakRdpKey_bool=false
 
 # Greeter definition
 module_greeter_modulename_string=Qt

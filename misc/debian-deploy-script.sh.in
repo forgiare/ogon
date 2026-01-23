@@ -11,3 +11,5 @@ sudo systemctl daemon-reload
 sudo systemctl enable ogon-session-manager
 sudo systemctl enable ogon-rdp-server
 sudo systemctl start ogon-rdp-server
+
+sudo ln -sf @OGON_PREFIX_PATH@/lib/x86_64-linux-gnu/qt5/plugins/platforms/libqogon.so /usr/lib/x86_64-linux-gnu/qt5/plugins/platforms/

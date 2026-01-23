@@ -47,8 +47,13 @@ int ogon_generate_certificate(std::string &certFile, std::string &keyFile) {
 	int ret = -1;
 
 	if (PathFileExistsA(certFile.c_str()) && PathFileExistsA(keyFile.c_str())) {
+		WLog_Print(logger_makeCert, WLOG_DEBUG, "ogon_generate_certificate(%s, %s) already exists",
+				certFile.c_str(), keyFile.c_str());
 		return 0;
 	}
+
+	WLog_Print(logger_makeCert, WLOG_DEBUG, "ogon_generate_certificate(%s, %s) regenerating",
+			certFile.c_str(), keyFile.c_str());
 
 	if (!stringEndsWith(certFile, ".crt")) {
 		WLog_Print(logger_makeCert, WLOG_ERROR,

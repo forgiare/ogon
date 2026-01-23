@@ -149,6 +149,7 @@ namespace ogon { namespace sessionmanager { namespace config {
 
 		PROPERTY_STORE_HELPER internStore;
 		if (!getPropertyInternal(sessionID, path, internStore, username) || (internStore.type != BoolType)) {
+			WLog_Print(logger_PropertyManager, WLOG_WARN, "error retrieving bool %s", path.c_str());
 			return false;
 		}
 
@@ -161,6 +162,7 @@ namespace ogon { namespace sessionmanager { namespace config {
 
 		PROPERTY_STORE_HELPER internStore;
 		if (!getPropertyInternal(sessionID, path, internStore, username) || (internStore.type != NumberType)) {
+			WLog_Print(logger_PropertyManager, WLOG_WARN, "error retrieving number %s", path.c_str());
 			return false;
 		}
 
@@ -173,6 +175,7 @@ namespace ogon { namespace sessionmanager { namespace config {
 
 		PROPERTY_STORE_HELPER internStore;
 		if (!getPropertyInternal(sessionID, path, internStore, username) || (internStore.type != StringType)) {
+			WLog_Print(logger_PropertyManager, WLOG_WARN, "error retrieving string %s", path.c_str());
 			return false;
 		}
 
