@@ -555,10 +555,8 @@ void ogon_PropertyItem_free(PropertyItem *items) {
 static int real_ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *items) {
 	size_t i, nitems = 0;
 	PropertyItem *propertyItem;
-	Ogon__Icp__PropertyReq *protobufReq;
-	Ogon__Icp__PropertyValue *protobufValue;
-	Ogon__Icp__PropertyReq *propertyReqPtr[MAX_PROPERTIES_NB];
-	Ogon__Icp__PropertyReq propertyRequests[MAX_PROPERTIES_NB];
+	Ogon__Icp__PropertyReq *propertyReqPtr[MAX_PROPERTIES_NB] = { 0 };
+	Ogon__Icp__PropertyReq propertyRequests[MAX_PROPERTIES_NB] = { 0 };
 
 	ICP_CLIENT_STUB_SETUP(PropertyBulk, property_bulk);
 
@@ -566,7 +564,9 @@ static int real_ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *it
 	request.properties = propertyReqPtr;
 
 	for (i = 0, propertyItem = items; propertyItem->path && i < MAX_PROPERTIES_NB; propertyItem++, i++) {
-		request.properties[i] = protobufReq = &propertyRequests[i];
+		Ogon__Icp__PropertyReq *protobufReq = &propertyRequests[i];
+
+		request.properties[i] = protobufReq;
 
 		ogon__icp__property_req__init(protobufReq);
 		protobufReq->propertypath = propertyItem->path;
@@ -594,7 +594,7 @@ static int real_ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *it
 	}
 
 	ICP_CLIENT_STUB_CALL(PropertyBulk, property_bulk);
-	if (ret != 0)
+	if (ret != PBRPC_SUCCESS)
 		return ret;
 
 	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyBulk, property_bulk);
@@ -605,7 +605,7 @@ static int real_ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *it
 
 	propertyItem = items;
 	for (i = 0; i < nitems; propertyItem++, i++) {
-		protobufValue = response->results[i];
+		Ogon__Icp__PropertyValue *protobufValue = response->results[i];
 		propertyItem->success = protobufValue->success;
 		if (!propertyItem->success)
 			continue;

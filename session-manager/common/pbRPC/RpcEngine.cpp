@@ -236,10 +236,9 @@ namespace ogon { namespace pbrpc {
 
 	int RpcEngine::readHeader() {
 
-		BOOL fSuccess;
 		DWORD lpNumberOfBytesRead = 0;
 
-		fSuccess = ReadFile(mhClientPipe, mHeaderBuffer + mHeaderRead,
+		BOOL fSuccess = ReadFile(mhClientPipe, mHeaderBuffer + mHeaderRead,
 				4 - mHeaderRead, &lpNumberOfBytesRead, NULL);
 
 		if (!fSuccess || (lpNumberOfBytesRead == 0)) {
@@ -257,11 +256,9 @@ namespace ogon { namespace pbrpc {
 	}
 
 	int RpcEngine::readPayload() {
-
-		BOOL fSuccess;
 		DWORD lpNumberOfBytesRead = 0;
 
-		fSuccess = ReadFile(mhClientPipe, mPayloadBuffer + mPayloadRead,
+		BOOL fSuccess = ReadFile(mhClientPipe, mPayloadBuffer + mPayloadRead,
 				mPacktLength - mPayloadRead, &lpNumberOfBytesRead, NULL);
 
 		if (!fSuccess || (lpNumberOfBytesRead == 0)) {

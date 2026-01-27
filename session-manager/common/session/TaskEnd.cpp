@@ -90,13 +90,14 @@ namespace ogon { namespace sessionmanager { namespace session {
 	}
 
 	void TaskEnd::stopSession() {
-		sessionNS::SessionPtr session = APP_CONTEXT.getSessionStore()->getSession(mSessionId);
+		auto store = APP_CONTEXT.getSessionStore();
+		sessionNS::SessionPtr session = store->getSession(mSessionId);
 		if (session) {
-			APP_CONTEXT.getSessionStore()->removeSession(mSessionId);
+			store->removeSession(mSessionId);
 			mSuccess = true;
 		} else {
 			WLog_Print(logger_TaskEnd, WLOG_WARN,
-				"s %" PRIu32 ": session not found!", mSessionId);
+				"stopSession %" PRIu32 ": session not found!", mSessionId);
 			mSuccess = false;
 		}
 	}

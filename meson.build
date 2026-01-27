@@ -19,6 +19,9 @@ else
        git_version = 'n/a'
 endif
 
+pkgconfig = import('pkgconfig')
+cmake = import('cmake')
+
 # Compiler setup
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
@@ -143,7 +146,6 @@ if get_option('with_sm')
 endif
 
 
-pkgconfig = import('pkgconfig')
 pkgconfig.generate(
 	filebase: 'ogon@0@'.format(ogon_version[0]),
 	name: 'ogon',
@@ -157,21 +159,6 @@ pkgconfig.generate(
 	subdirs: 'ogon@0@'.format(ogon_version[0]),
 )
 
-pkgconfig.generate(ogon_backend_lib,
-	filebase: 'ogon-backend@0@'.format(ogon_version[0]),
-	name: 'ogon backend',
-	description: 'ogon RDP server backend library',
-	version: meson.project_version(),
-	libraries: ogon_backend_lib,
-	url: 'http://ogon-project.com/',
-	subdirs: 'ogon@0@'.format(ogon_version[0]),
-	variables: [
-		'protocol_dir=${prefix}/@0@'.format(protocols_paths),
-		'module_dir=${prefix}/@0@/@1@/modules'.format(get_option('libdir'), ogon_app_lib_dir),
-	]
-)
-
-cmake = import('cmake')
 cmake_dir = join_paths(get_option('libdir'), 'cmake', 'ogon@0@'.format(ogon_version[0]))
 cmake.write_basic_package_version_file(name: 'ogon',
 	version: meson.project_version(),

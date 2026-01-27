@@ -53,19 +53,14 @@ static BOOL dvc_send_close(registered_virtual_channel *dvc);
 registered_virtual_channel *VirtualChannelManagerGetChannelByNameAndType(ogon_vcm *vcm,
 	const char *name, UINT16 type)
 {
-	registered_virtual_channel *currentChannel = NULL;
-	wArrayList *registeredChannels;
-	UINT32 index;
-	int count;
-
 	if ((vcm == NULL) || (vcm->registered_virtual_channels == NULL)) {
 		return NULL;
 	}
-	registeredChannels = vcm->registered_virtual_channels;
+	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 
-	count = ArrayList_Count(registeredChannels);
-	for (index = 0; index < (unsigned int)count; index++) {
-		currentChannel = (registered_virtual_channel *)ArrayList_GetItem(registeredChannels, index);
+	int count = ArrayList_Count(registeredChannels);
+	for (UINT32 index = 0; index < (unsigned int)count; index++) {
+		registered_virtual_channel *currentChannel = (registered_virtual_channel *)ArrayList_GetItem(registeredChannels, index);
 		if (strncasecmp(currentChannel->vc_name, name, strlen(currentChannel->vc_name)) == 0 &&
 			currentChannel->channel_type == type)
 		{
@@ -79,20 +74,14 @@ registered_virtual_channel *VirtualChannelManagerGetChannelByNameAndType(ogon_vc
 registered_virtual_channel *VirtualChannelManagerGetChannelByIdAndType(ogon_vcm *vcm,
 	UINT32 id, UINT16 type)
 {
-	registered_virtual_channel *currentChannel = NULL;
-	wArrayList *registeredChannels;
-	UINT32 index;
-	int count;
-
 	if ((vcm == NULL) || (vcm->registered_virtual_channels == NULL)) {
 		return NULL;
 	}
-	registeredChannels = vcm->registered_virtual_channels;
+	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 
-
-	count = ArrayList_Count(registeredChannels);
-	for (index = 0; index < (unsigned int)count; index++) {
-		currentChannel = (registered_virtual_channel *)ArrayList_GetItem(registeredChannels, index);
+	int count = ArrayList_Count(registeredChannels);
+	for (UINT32 index = 0; index < (unsigned int)count; index++) {
+		registered_virtual_channel *currentChannel = (registered_virtual_channel *)ArrayList_GetItem(registeredChannels, index);
 		if ((currentChannel->channel_id == id) && (currentChannel->channel_type == type)) {
 			return currentChannel;
 		}
@@ -104,7 +93,6 @@ registered_virtual_channel *VirtualChannelManagerGetChannelByIdAndType(ogon_vcm 
 static registered_virtual_channel *vc_new(const char *vcname, const char *pipeName, HANDLE serverHandle,
 	ogon_vcm *vcm, ogon_connection *conn)
 {
-	rdpSettings *settings;
 	registered_virtual_channel *ret = (registered_virtual_channel *)calloc(1, sizeof(registered_virtual_channel));
 	if (!ret) {
 		WLog_ERR(TAG, "error allocating registered virtual channel");
@@ -136,7 +124,7 @@ static registered_virtual_channel *vc_new(const char *vcname, const char *pipeNa
 	ret->channel_id = WTSChannelGetId(vcm->client, vcname);
 	ret->pipe_client = INVALID_HANDLE_VALUE;
 
-	settings = vcm->client->settings;
+	rdpSettings *settings = vcm->client->settings;
 	ret->pipe_expected_bytes = 4;
 	ret->pipe_waiting_length = TRUE;
 	ret->pipe_target_buffer = ret->header_buffer;
@@ -191,16 +179,17 @@ void vc_free(registered_virtual_channel *channel) {
 static BOOL vc_flush_xmit_buffer(registered_virtual_channel *channel, int sendLimit) {
 	DWORD written;
 	DataChunk chunks[2];
-	int i, nbChunks;
-	int commitedBytes = 0;
+	int nbChunks;
 
 	if (channel->internalChannel) {
 		if (!channel->internalChannel->receive_callback) {
 			return FALSE;
 		}
+
+		int commitedBytes = 0;
 		while ((nbChunks = ringbuffer_peek(&channel->pipe_xmit_buffer, chunks, 16384))) {
 			commitedBytes = 0;
-			for (i = 0; i < nbChunks; i++) {
+			for (int i = 0; i < nbChunks; i++) {
 				if (!channel->internalChannel->receive_callback(channel->internalChannel->context, chunks[i].data, chunks[i].size)) {
 					return FALSE;
 				}
@@ -215,13 +204,14 @@ static BOOL vc_flush_xmit_buffer(registered_virtual_channel *channel, int sendLi
 		return TRUE;
 	}
 
+	int commitedBytes = 0;
 	while ((nbChunks = ringbuffer_peek(&channel->pipe_xmit_buffer, chunks, 16384))) {
 		commitedBytes = 0;
 
 		/*WLog_DBG(TAG, "used=%"PRIuz" chunk0=%"PRIuz" chunk1=%"PRIuz"", ringbuffer_used(&channel->pipe_xmit_buffer),
 				chunks[0].size, chunks[1].size);*/
 
-		for (i = 0; i < nbChunks; i++) {
+		for (int i = 0; i < nbChunks; i++) {
 			while (chunks[i].size) {
 				if (!WriteFile(channel->pipe_client, chunks[i].data, chunks[i].size, &written, NULL)) {
 					WLog_ERR(TAG, "error writing to channel client pipe");
@@ -310,9 +300,6 @@ static void ogon_channels_drdynvc_state_change(ogon_vcm *vcm) {
 }
 
 BOOL ogon_channels_post_connect(ogon_connection *connection) {
-	UINT32 dynvc_caps;
-	wArrayList *registeredChannels;
-	registered_virtual_channel *dynChannel = NULL;
 	ogon_vcm *vcm = connection->front.vcm;
 	BOOL result = FALSE;
 
@@ -329,9 +316,9 @@ BOOL ogon_channels_post_connect(ogon_connection *connection) {
 
 	vcm->drdynvc_state = DRDYNVC_STATE_FAILED;
 
-	registeredChannels = vcm->registered_virtual_channels;
+	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 
-	dynChannel = vc_new("drdynvc", NULL, NULL, vcm, NULL);
+	registered_virtual_channel *dynChannel = vc_new("drdynvc", NULL, NULL, vcm, NULL);
 	if (!dynChannel) {
 		WLog_ERR(TAG, "unable to allocate dynamic channel");
 		goto out;
@@ -351,7 +338,7 @@ BOOL ogon_channels_post_connect(ogon_connection *connection) {
 	}
 
 	vcm->drdynvc_channel_id = dynChannel->channel_id;
-	dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
+	UINT32 dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
 	if (!dynChannel->client->SendChannelData(dynChannel->client, dynChannel->channel_id, (BYTE *)&dynvc_caps, sizeof(dynvc_caps))) {
 		WLog_ERR(TAG, "SendChannelData failed failed in post connect");
 		goto out;
@@ -501,8 +488,6 @@ static BOOL wts_read_drdynvc_create_response(registered_virtual_channel *channel
 
 static BOOL wts_read_drdynvc_data_first(registered_virtual_channel *channel, wStream *s, int cbLen, UINT32 length)
 {
-	int value;
-
 	if (channel->dvc_total_length) {
 		/* If we haven't seen all the bytes of the previous packet there's good chances
 		 * that the traffic is corrupted
@@ -511,7 +496,7 @@ static BOOL wts_read_drdynvc_data_first(registered_virtual_channel *channel, wSt
 		return FALSE;
 	}
 
-	value = wts_read_variable_uint(s, cbLen, &channel->dvc_total_length);
+	int value = wts_read_variable_uint(s, cbLen, &channel->dvc_total_length);
 	if (value == 0) {
 		return FALSE;
 	}
@@ -595,16 +580,9 @@ static BOOL wts_read_drdynvc_close_response(registered_virtual_channel *channel)
 
 static BOOL wts_read_drdynvc_pdu(registered_virtual_channel *channel, wStream *s)
 {
-	UINT32 length;
 	int value;
-	int cmd;
-	int Sp;
-	int cbChId;
-	UINT32 channelId;
-	registered_virtual_channel *targetChannel;
 
-	length = Stream_GetPosition(s);
-
+	UINT32 length = Stream_GetPosition(s);
 	if (length < 2) {
 		return FALSE;
 	}
@@ -613,9 +591,9 @@ static BOOL wts_read_drdynvc_pdu(registered_virtual_channel *channel, wStream *s
 	Stream_Read_UINT8(s, value);
 
 	length--;
-	cmd = (value & 0xf0) >> 4;
-	Sp = (value & 0x0c) >> 2;
-	cbChId = (value & 0x03) /*>> 0*/;
+	int cmd = (value & 0xf0) >> 4;
+	int Sp = (value & 0x0c) >> 2;
+	int cbChId = (value & 0x03) /*>> 0*/;
 
 	if (cmd == CAPABILITY_REQUEST_PDU) {
 		int laststate = channel->vcm->drdynvc_state;
@@ -634,6 +612,7 @@ static BOOL wts_read_drdynvc_pdu(registered_virtual_channel *channel, wStream *s
 		return FALSE;
 	}
 
+	UINT32 channelId;
 	value = wts_read_variable_uint(s, cbChId, &channelId);
 	if (value == 0) {
 		return FALSE;
@@ -641,7 +620,7 @@ static BOOL wts_read_drdynvc_pdu(registered_virtual_channel *channel, wStream *s
 
 	length -= value;
 
-	targetChannel = VirtualChannelManagerGetChannelByIdAndType(channel->vcm, channelId, RDP_PEER_CHANNEL_TYPE_DVC);
+	registered_virtual_channel *targetChannel = VirtualChannelManagerGetChannelByIdAndType(channel->vcm, channelId, RDP_PEER_CHANNEL_TYPE_DVC);
 	if (!targetChannel) {
 		if (cmd != CLOSE_REQUEST_PDU) {
 			WLog_ERR(TAG, "channel with id=%"PRIu32" does not exist, not executing request with type %d", channelId, cmd);
@@ -802,15 +781,13 @@ ogon_vcm *openVirtualChannelManager(ogon_connection *conn)
 
 void virtual_manager_close_all_channels(ogon_vcm *vcm)
 {
-	int count, index;
-	registered_virtual_channel *currentChannel;
 	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 
-	count = ArrayList_Count(registeredChannels);
+	int count = ArrayList_Count(registeredChannels);
 
-	for (index = 0; index < count; index++)
+	for (int index = 0; index < count; index++)
 	{
-		currentChannel = (registered_virtual_channel *) ArrayList_GetItem(registeredChannels, index);
+		registered_virtual_channel *currentChannel = (registered_virtual_channel *) ArrayList_GetItem(registeredChannels, index);
 		vc_disconnect_server_part(currentChannel);
 		vc_disconnect_client_part(currentChannel);
 		if (currentChannel->internalChannel)
@@ -824,13 +801,11 @@ void virtual_manager_close_all_channels(ogon_vcm *vcm)
 
 void closeVirtualChannelManager(ogon_vcm *vcm)
 {
-	wArrayList *registeredChannels;
-
 	if (!vcm) {
 		return;
 	}
 
-	registeredChannels = vcm->registered_virtual_channels;
+	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 
 	virtual_manager_close_all_channels(vcm);
 
@@ -870,10 +845,10 @@ static BOOL vc_handle_read(registered_virtual_channel *regVC, int readLimit) {
 	BOOL first;
 	BYTE *writeBuffer, *buffer;
 	wStream *s;
-	int cbLen, cbChId, sendlength, totalRead;
+	int cbLen, cbChId, sendlength;
 	ULONG toWrite;
 
-	totalRead = 0;
+	int totalRead = 0;
 	while (totalRead < readLimit) {
 		if (!ReadFile(handle, regVC->pipe_target_buffer, regVC->pipe_expected_bytes, &bytesRead, NULL))
 		{
@@ -1036,14 +1011,11 @@ static int handle_vc_named_pipe_connect_event(int mask, int fd, HANDLE handle, v
 {
 	OGON_UNUSED(fd);
 	registered_virtual_channel *channel = (registered_virtual_channel *)data;
-	BOOL fConnected;
-	DWORD dwPipeMode;
-	HANDLE createdPipe;
 
 	if (!(mask & OGON_EVENTLOOP_READ))
 		return TRUE;
 
-	fConnected = ConnectNamedPipe(handle, NULL);
+	BOOL fConnected = ConnectNamedPipe(handle, NULL);
 
 	if (!fConnected)
 		fConnected = (GetLastError() == ERROR_PIPE_CONNECTED);
@@ -1058,7 +1030,7 @@ static int handle_vc_named_pipe_connect_event(int mask, int fd, HANDLE handle, v
 	vc_disconnect_client_part(channel);
 
 	// adding new client
-	dwPipeMode = PIPE_NOWAIT;
+	DWORD dwPipeMode = PIPE_NOWAIT;
 	if (!SetNamedPipeHandleState(handle, &dwPipeMode, NULL, NULL)) {
 		WLog_ERR(TAG, "SetNamedPipeHandleState failed");
 		return FALSE;
@@ -1085,7 +1057,7 @@ static int handle_vc_named_pipe_connect_event(int mask, int fd, HANDLE handle, v
 		return FALSE;
 	}
 
-	createdPipe = ogon_named_pipe_create(channel->pipe_name);
+	HANDLE createdPipe = ogon_named_pipe_create(channel->pipe_name);
 	if (createdPipe == INVALID_HANDLE_VALUE) {
 		WLog_ERR(TAG, "error creating channel named pipe (%s)", channel->pipe_name);
 		return FALSE;
@@ -1114,16 +1086,10 @@ BOOL virtual_manager_open_virtual_channel_send_error(struct ogon_notification_vc
 
 BOOL virtual_manager_open_static_virtual_channel(ogon_connection *conn, ogon_vcm *vcm, wMessage *msg)
 {
-	char buffer[1024] = {0};
-	wArrayList *registeredChannels;
-	registered_virtual_channel *currentChannel;
 	struct ogon_notification_vc_connect *notification = (struct ogon_notification_vc_connect *) msg->wParam;
-	int error = 0;
-	HANDLE createdPipe = INVALID_HANDLE_VALUE;
-	int length = 0;
+	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 
-	registeredChannels = vcm->registered_virtual_channels;
-	length = strlen(notification->vcname);
+	int length = strlen(notification->vcname);
 	if (length > 8)	{
 		WLog_ERR(TAG, "open static channel: name too long (%s)", notification->vcname);
 		virtual_manager_open_virtual_channel_send_error(notification, msg);
@@ -1137,9 +1103,9 @@ BOOL virtual_manager_open_static_virtual_channel(ogon_connection *conn, ogon_vcm
 	}
 
 	// first check if this pipe is already opened
-	currentChannel = VirtualChannelManagerGetChannelByNameAndType(vcm, notification->vcname, RDP_PEER_CHANNEL_TYPE_SVC);
+	registered_virtual_channel *currentChannel = VirtualChannelManagerGetChannelByNameAndType(vcm, notification->vcname, RDP_PEER_CHANNEL_TYPE_SVC);
 	if (currentChannel) {
-		error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, currentChannel);
+		int error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, currentChannel);
 		if (error != 0) {
 			WLog_ERR(TAG, "open static channel: ogon_icp_sendResponse failed");
 			return FALSE;
@@ -1147,9 +1113,10 @@ BOOL virtual_manager_open_static_virtual_channel(ogon_connection *conn, ogon_vcm
 		return TRUE;
 	}
 
+	char buffer[1024] = {0};
 	snprintf(buffer, sizeof(buffer), "\\\\.\\pipe\\%s_%ld", notification->vcname, conn->id);
 
-	createdPipe = ogon_named_pipe_create(buffer);
+	HANDLE createdPipe = ogon_named_pipe_create(buffer);
 	if (createdPipe == INVALID_HANDLE_VALUE) {
 		WLog_ERR(TAG, "open static channel: error creating named pipe (%s)", buffer);
 		virtual_manager_open_virtual_channel_send_error(notification, msg);
@@ -1181,9 +1148,9 @@ BOOL virtual_manager_open_static_virtual_channel(ogon_connection *conn, ogon_vcm
 
 	WLog_DBG(TAG, "static channel id %"PRIu32" created successfully", currentChannel->channel_id);
 
-	error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, currentChannel);
+	int error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, currentChannel);
 	if (error != 0) {
-		WLog_ERR(TAG, "open static channel: ogon_icp_sendResponse failed");
+		WLog_ERR(TAG, "open static channel: ogon_icp_sendResponse failed, error=%d", error);
 		return FALSE;
 	}
 	return TRUE;
@@ -1210,10 +1177,8 @@ static void wts_write_drdynvc_header(wStream *s, BYTE Cmd, UINT32 ChannelId)
 
 static BOOL wts_write_drdynvc_create_request(wStream *s, UINT32 ChannelId, const char *ChannelName)
 {
-	size_t len;
-
 	wts_write_drdynvc_header(s, CREATE_REQUEST_PDU, ChannelId);
-	len = strlen(ChannelName) + 1;
+	size_t len = strlen(ChannelName) + 1;
 	if (!Stream_EnsureRemainingCapacity(s, len)) {
 		return FALSE;
 	}
@@ -1223,20 +1188,12 @@ static BOOL wts_write_drdynvc_create_request(wStream *s, UINT32 ChannelId, const
 
 BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vcm *vcm, wMessage *msg)
 {
-	char buffer[MAX_PATH +1]  = {0};
-	wArrayList *registeredChannels;
-	registered_virtual_channel *currentChannel = NULL;
 	struct ogon_notification_vc_connect *notification = (struct ogon_notification_vc_connect *) msg->wParam;
-	int error = 0;
-	HANDLE createdPipe = INVALID_HANDLE_VALUE;
-	int length= 0;
-	char str[26] = {0};
-	int templength = 0;
-	wStream *s = NULL;
 
-	length = strlen(notification->vcname);
-	sprintf(str, "_DYN_%ld", conn->id);
-	templength = strlen(str);
+	int length = strlen(notification->vcname);
+	char str[26] = {0};
+	snprintf(str, sizeof(str), "_DYN_%ld", conn->id);
+	int templength = strlen(str);
 
 	if (length > (MAX_PATH - 9 - templength) ) {
 		WLog_ERR(TAG, "open dynamic channel: name too long (%s)", notification->vcname);
@@ -1244,7 +1201,7 @@ BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vc
 		return TRUE;
 	}
 
-	registeredChannels = vcm->registered_virtual_channels;
+	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 	if (!WTSIsChannelJoinedByName(vcm->client, "drdynvc")) {
 		WLog_ERR(TAG, "open dynamic channel: channel (%s) is not registered", notification->vcname);
 		virtual_manager_open_virtual_channel_send_error(notification, msg);
@@ -1252,21 +1209,20 @@ BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vc
 	}
 
 	// first check if this pipe is opened
-	currentChannel = VirtualChannelManagerGetChannelByNameAndType(vcm, notification->vcname, RDP_PEER_CHANNEL_TYPE_DVC);
+	registered_virtual_channel *currentChannel = VirtualChannelManagerGetChannelByNameAndType(vcm, notification->vcname, RDP_PEER_CHANNEL_TYPE_DVC);
 	if (currentChannel) {
-		error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, currentChannel);
+		int error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, currentChannel);
 		if (error != 0) {
-			WLog_ERR(TAG, "open dynamic channel: ogon_icp_sendResponse failed");
+			WLog_ERR(TAG, "open dynamic channel: ogon_icp_sendResponse failed, error=%d", error);
 			return FALSE;
 		}
 		return TRUE;
 	}
 
-	strcpy(buffer, "\\\\.\\pipe\\");
-	strcat(buffer, notification->vcname);
-	strcat(buffer, str);
+	char buffer[MAX_PATH +1]  = {0};
+	snprintf(buffer, sizeof(buffer), "\\\\.\\pipe\\%s%s", notification->vcname, str);
 
-	createdPipe = ogon_named_pipe_create(buffer);
+	HANDLE createdPipe = ogon_named_pipe_create(buffer);
 	if (createdPipe == INVALID_HANDLE_VALUE) {
 		virtual_manager_open_virtual_channel_send_error(notification, msg);
 		return FALSE;
@@ -1289,7 +1245,7 @@ BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vc
 		goto pipeError;
 	}
 
-	s = Stream_New(NULL, 64);
+	wStream *s = Stream_New(NULL, 64);
 	if (!s) {
 		WLog_ERR(TAG, "open dynamic channel: Stream_New failed");
 		goto eventLoopRemoveError;
@@ -1330,20 +1286,17 @@ closePipeError:
 }
 
 static BOOL dvc_send_close(registered_virtual_channel *dvc) {
-	ogon_vcm *vcm;
-	wStream *s;
-	BOOL ret = TRUE;
-
 	if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
 		return TRUE;
 
-	vcm = dvc->vcm;
-	s = Stream_New(NULL, 8);
+	ogon_vcm *vcm = dvc->vcm;
+	wStream *s = Stream_New(NULL, 8);
 	if (!s) {
 		WLog_ERR(TAG, "dvc send close: Stream_New failed");
 		return FALSE;
 	}
 
+	BOOL ret = TRUE;
 	wts_write_drdynvc_header(s, CLOSE_REQUEST_PDU, dvc->channel_id);
 	if (!vcm->client->SendChannelData(vcm->client, vcm->drdynvc_channel_id, Stream_Buffer(s), Stream_GetPosition(s))) {
 		WLog_ERR(TAG, "dvc send close: SendChannelData failed");
@@ -1377,21 +1330,19 @@ BOOL virtual_manager_close_dynamic_virtual_channel_common(registered_virtual_cha
 
 
 BOOL virtual_manager_close_dynamic_virtual_channel(ogon_vcm *vcm, wMessage *msg) {
-	int count;
-	int error;
-	int index;
 	struct ogon_notification_vc_disconnect *notification = (struct ogon_notification_vc_disconnect *) msg->wParam;
 	wArrayList *registeredChannels = vcm->registered_virtual_channels;
-	registered_virtual_channel *channel = NULL;
 
 	if (vcm == NULL) {
 		return FALSE;
 	}
 
-	count = ArrayList_Count(registeredChannels);
-	for (index = 0; index < count; index++)
+	int count = ArrayList_Count(registeredChannels);
+	int error;
+
+	for (int index = 0; index < count; index++)
 	{
-		channel = (registered_virtual_channel *) ArrayList_GetItem(registeredChannels, index);
+		registered_virtual_channel *channel = (registered_virtual_channel *) ArrayList_GetItem(registeredChannels, index);
 		if (strncasecmp(channel->vc_name,notification->vcname,strlen(channel->vc_name)) != 0)
 			continue;
 
@@ -1443,13 +1394,12 @@ BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *in
 	BYTE *streamBuffer;
 	BOOL result = FALSE;
 	wStream *s = NULL;
-	registered_virtual_channel *regVC;
 
 	if (!intVC || !intVC->channel) {
 		return FALSE;
 	}
 
-	regVC = intVC->channel;
+	registered_virtual_channel *regVC = intVC->channel;
 
 	/* static channel data */
 	if (regVC->channel_type == RDP_PEER_CHANNEL_TYPE_SVC) {
@@ -1531,9 +1481,6 @@ out_error:
 internal_virtual_channel *virtual_manager_open_internal_virtual_channel(
 		ogon_vcm *vcm, const char *name, BOOL isDynamic)
 {
-	registered_virtual_channel *regVC = NULL;
-	internal_virtual_channel *intVC = NULL;
-	wStream *s = NULL;
 	UINT16 channelType = isDynamic ? RDP_PEER_CHANNEL_TYPE_DVC : RDP_PEER_CHANNEL_TYPE_SVC;
 
 	if (isDynamic) {
@@ -1557,7 +1504,10 @@ internal_virtual_channel *virtual_manager_open_internal_virtual_channel(
 		return NULL;
 	}
 
-	if (!(intVC = calloc(1, sizeof(internal_virtual_channel)))) {
+	registered_virtual_channel *regVC = NULL;
+	wStream *s = NULL;
+	internal_virtual_channel *intVC = calloc(1, sizeof(internal_virtual_channel));
+	if (intVC) {
 		WLog_ERR(TAG, "open internal channel: failed to allocate internal channel (%s)", name);
 		goto err;
 	}
@@ -1620,23 +1570,17 @@ err:
 }
 
 BOOL virtual_manager_close_internal_virtual_channel(internal_virtual_channel *intVC) {
-	int count;
-	int index;
-	wArrayList *registeredChannels;
-	registered_virtual_channel *channel = NULL;
-	ogon_vcm *vcm = NULL;
-
 	if (!intVC || !intVC->channel || !intVC->channel->vcm) {
 		return FALSE;
 	}
 
-	vcm = intVC->channel->vcm;
-	registeredChannels = vcm->registered_virtual_channels;
+	ogon_vcm *vcm = intVC->channel->vcm;
+	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 
-	count = ArrayList_Count(registeredChannels);
-	for (index = 0; index < count; index++)
+	int count = ArrayList_Count(registeredChannels);
+	for (int index = 0; index < count; index++)
 	{
-		channel = (registered_virtual_channel *) ArrayList_GetItem(registeredChannels, index);
+		registered_virtual_channel *channel = (registered_virtual_channel *)ArrayList_GetItem(registeredChannels, index);
 		if (channel != intVC->channel)
 			continue;
 
